@@ -1,0 +1,58 @@
+name: Build And Release
+on:
+  push:
+    branches: [main, feat, docs]
+jobs:
+  build-and-deploy:
+    runs-on: macos-14
+
+    strategy:
+      matrix:
+        node-version: [22]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install pnpm
+        run: corepack enable
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Setup timezone
+        uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: Asia/Shanghai
+          timezoneMacos: Asia/Shanghai
+          timezoneWindows: Asia/Shanghai
+
+      - run: pnpm install
+
+      - name: Set branch environment variable
+        run: |
+          currentBranch=$(git branch --show-current)
+          now_date=$(date "+%Y-%m-%d_%H-%M-%S")
+          echo "project_branch=${currentBranch}-${now_date}" >> ${GITHUB_ENV}
+
+      - name: Build
+        run: |
+          npm install -g pnpm
+          export NODE_OPTIONS=--max-old-space-size=8192
+          export NODE_OPTIONS=--openssl-legacy-provider
+          pnpm run build:site
+          ls
+          # todo 修改打包文件地址
+          tar -czvf build.tar.gz dist
+          # todo 修改打包的名字
+          cp build.tar.gz native-ui-${project_branch}_build.tar.gz
+          ls
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.project_branch }}
+          allowUpdates: true
+          artifacts: "native-ui-*"
+          token: ${{ github.token }}
+          generateReleaseNotes: true
