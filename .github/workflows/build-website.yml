@@ -42,9 +42,9 @@ jobs:
           export NODE_OPTIONS=--openssl-legacy-provider
           pnpm run build:site
           ls
-          # todo 修改打包文件地址
-          tar -czvf build.tar.gz dist
-          # todo 修改打包的名字
+          # todo 修改打包完成的文件地址
+          tar -czvf build.tar.gz site
+          # todo 修改打包上传的标记名字
           cp build.tar.gz native-ui-${project_branch}_build.tar.gz
           ls
 
@@ -53,6 +53,7 @@ jobs:
         with:
           tag: ${{ env.project_branch }}
           allowUpdates: true
+          # todo 修改为对应打包上传的标记名字
           artifacts: "native-ui-*"
           token: ${{ github.token }}
           generateReleaseNotes: true
